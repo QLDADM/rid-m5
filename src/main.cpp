@@ -40,7 +40,7 @@ static volatile uint32_t dropped = 0;
 static Preferences prefs;
 static uint16_t bootId = 0;
 
-#define FW_VERSION "1.5"  // wspólny numer dla Heltec, CYD i M5 - nowy tylko przy dużych zmianach
+#define FW_VERSION "1.6"  // wspólny numer dla Heltec, CYD i M5 - nowy tylko przy dużych zmianach
 #include "drones.h"
 #include "wifidrone.h"  // drony Wi-Fi bez Remote ID (Tello, Parrot, zabawkowe z kamerą Wi-Fi)
 
@@ -267,7 +267,8 @@ static void drawDrones(DroneInfo **list, int n) {
   d.setTextColor(TFT_WHITE, TFT_BLACK);
   d.setTextDatum(textdatum_t::top_left);
   d.setFont(&fonts::Font2);
-  d.drawString(x->id[0] ? x->id : "bez ID", 4, 22);
+  d.drawString(String(x->id[0] ? x->id : "bez ID") +
+                   (x->euClass >= 1 && x->euClass <= 7 ? "  C" + String(x->euClass - 1) : String("")), 4, 22);
   if (x->wifiKind) {  // dron Wi-Fi bez Remote ID: rodzaj zamiast wysokości i pozycji
     d.drawString(String("dron Wi-Fi: ") + x->wifiKind, 4, 42);
     d.drawString("kanal " + String(x->wifiCh) + ", brak Remote ID", 4, 62);
@@ -278,12 +279,14 @@ static void drawDrones(DroneInfo **list, int n) {
   }
   String l2 = "wys " + (isnan(x->height) ? String("-") : String((int)x->height) + " m");
   if (!isnan(x->speed)) l2 += "   " + String(x->speed, 0) + " m/s";
+  if (!isnan(x->vspeed)) l2 += "   pion " + String(x->vspeed, 1);
   d.drawString(l2, 4, 42);
   d.drawString((x->hasOp && x->hasLoc) ? "operator " + String((int)distM(x->lat, x->lon, x->opLat, x->opLon)) + " m od drona"
                                        : String(x->hasLoc ? "operator: brak pozycji" : "brak pozycji drona"), 4, 62);
   d.drawString("RSSI " + String(x->rssi) + " dBm   " + String((millis() - x->lastMs) / 1000) + " s temu", 4, 82);
+  if (x->opId[0]) d.drawString(String("op ") + x->opId, 4, 100);
   d.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  d.drawString("B: nastepny  A przytrzymaj: oznacz", 4, 112);
+  d.drawString("B: nastepny  A przytrzymaj: oznacz", 4, 118);
 }
 
 static void drawHunt(DroneInfo **list, int n) {

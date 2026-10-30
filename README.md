@@ -1,4 +1,4 @@
-# RID M5: osobisty alarm Remote ID na M5StickC Plus2 (wersja 1.5)
+# RID M5: osobisty alarm Remote ID na M5StickC Plus2 (wersja 1.6)
 
 Firmware dla **M5StickC Plus2**. Zamienia go w mały wykrywacz dronów do noszenia przy sobie:
 
@@ -25,7 +25,7 @@ Ten sam numer wersji mają firmware dla [Heltec V3](https://github.com/QLDADM/ri
 ### Krok 1. Pobierz plik firmware
 
 1. Wejdź na https://github.com/QLDADM/rid-m5/releases.
-2. Przy najnowszej wersji (np. **v1.5**) w sekcji **Assets** kliknij **`rid-m5stickc-plus2-full.bin`**.
+2. Przy najnowszej wersji (np. **v1.6**) w sekcji **Assets** kliknij **`rid-m5stickc-plus2-full.bin`**.
 3. Plik trafi do folderu **Pobrane**. Nie otwieraj go i nie zmieniaj mu nazwy.
 
 ### Krok 2. Podłącz urządzenie
@@ -81,7 +81,7 @@ Pierwsze naciśnięcie przy przyciemnionym albo wygaszonym ekranie tylko go budz
 
 - **ALARM**: czerwone tło i **DRON!** przy obcym lub nieoznaczonym dronie, zielone **SWOJ**, gdy w pobliżu są tylko
   swoje, a **BRAK**, gdy nic nie lata. Na dole najbliższy dron (najsilniejszy sygnał), RSSI i odległość do operatora.
-- **DRONY**: drony po kolei, od najbliższego. Widać ID, oznaczenie, wysokość, prędkość, odległość dron–operator,
+- **DRONY**: drony po kolei, od najbliższego. Widać ID, klasę UE, oznaczenie, wysokość, prędkość poziomą i pionową, numer operatora, odległość dron–operator,
   RSSI i wiek danych. Przy dronie Wi-Fi bez Remote ID widać „dron Wi-Fi: rodzaj” i kanał zamiast wysokości.
 - **SZUKAJ**: duży odczyt siły sygnału wybranego drona, pasek i maksimum. **Piszczy tym szybciej, im silniejszy sygnał**,
   więc idąc w stronę szybszego piszczenia zbliżasz się do drona.

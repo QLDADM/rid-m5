@@ -21,6 +21,12 @@ struct DroneInfo {
   uint8_t status;               // 0 nieznany, 1 na ziemi, 2 w powietrzu, 3 awaria
   bool hasOp;
   int32_t opLat, opLon;
+  char opId[21];  // numer operatora (Operator ID), pusty = brak
+  float vspeed, altBaro, opAlt;  // NAN = brak
+  uint8_t uaType, opLocType;     // kody ASTM; opLocType: 0 start, 1 na żywo, 2 stała
+  uint8_t euCat, euClass;        // 0 = nieokreślone; euClass: 1 = C0 ... 7 = C6
+  char selfId[24];               // opis ustawiony przez operatora
+  float maxHeight, maxSpeed;     // maksima w tym uruchomieniu płytki; NAN = brak
   // alarmy LoRa
   bool alerted;
   bool shown;  // nowy dron już obudził ekran
@@ -96,7 +102,7 @@ static DroneInfo *droneForMac(const uint8_t *mac) {
   memset(&d, 0, sizeof(d));
   d.used = true;
   d.firstMs = now;
-  d.altGeo = d.height = d.speed = NAN;
+  d.altGeo = d.height = d.speed = d.vspeed = d.altBaro = d.opAlt = d.maxHeight = d.maxSpeed = NAN;
   d.track = -1;
   addMac(d, mac);
   return &d;
@@ -113,6 +119,13 @@ static DroneInfo *mergeById(DroneInfo *d) {
       o.speed = d->speed; o.track = d->track; o.status = d->status;
     }
     if (d->hasOp && !o.hasOp) { o.hasOp = true; o.opLat = d->opLat; o.opLon = d->opLon; }
+    if (d->opId[0] && !o.opId[0]) strcpy(o.opId, d->opId);
+    if (d->selfId[0] && !o.selfId[0]) strcpy(o.selfId, d->selfId);
+    if (d->uaType && !o.uaType) o.uaType = d->uaType;
+    if (d->euClass && !o.euClass) { o.euClass = d->euClass; o.euCat = d->euCat; }
+    if (!isnan(d->opAlt) && isnan(o.opAlt)) { o.opAlt = d->opAlt; o.opLocType = d->opLocType; }
+    if (!isnan(d->maxHeight) && !(o.maxHeight >= d->maxHeight)) o.maxHeight = d->maxHeight;
+    if (!isnan(d->maxSpeed) && !(o.maxSpeed >= d->maxSpeed)) o.maxSpeed = d->maxSpeed;
     o.lastMs = max(o.lastMs, d->lastMs);
     o.firstMs = min(o.firstMs, d->firstMs);
     d->used = false;
@@ -130,6 +143,7 @@ static void parseMessage(DroneInfo *&d, const uint8_t *m) {
       for (int i = 19; i >= 0 && (id[i] == 0 || id[i] == ' '); i--) id[i] = 0;
       for (int i = 0; id[i]; i++)
         if (id[i] < 32 || id[i] > 126) id[i] = '?';
+      if (m[1] & 0x0F) d->uaType = m[1] & 0x0F;
       // pierwsze ID albo numer seryjny (typ 1) wygrywa z ID sesji
       if (id[0] && (!d->id[0] || (m[1] >> 4) == 1)) {
         strcpy(d->id, id);
@@ -152,6 +166,20 @@ static void parseMessage(DroneInfo *&d, const uint8_t *m) {
       }
       d->altGeo = odidAlt(m + 15);
       d->height = odidAlt(m + 17);
+      d->altBaro = odidAlt(m + 13);
+      d->vspeed = (int8_t)m[4] == 126 ? NAN : (int8_t)m[4] * 0.5f;
+      if (!isnan(d->height) && !(d->maxHeight >= d->height)) d->maxHeight = d->height;
+      if (!isnan(d->speed) && !(d->maxSpeed >= d->speed)) d->maxSpeed = d->speed;
+      break;
+    }
+    case 3: {  // Self ID: opis; znaki spoza ASCII i niebezpieczne w JSON zastępujemy
+      char txt[24];
+      memcpy(txt, m + 2, 23);
+      txt[23] = 0;
+      for (int i = 22; i >= 0 && (txt[i] == 0 || txt[i] == ' '); i--) txt[i] = 0;
+      for (int i = 0; txt[i]; i++)
+        if (txt[i] < 32 || txt[i] > 126 || txt[i] == '"' || txt[i] == '\\') txt[i] = '?';
+      strcpy(d->selfId, txt);
       break;
     }
     case 4: {  // System: pozycja operatora i czas
@@ -161,9 +189,25 @@ static void parseMessage(DroneInfo *&d, const uint8_t *m) {
         d->opLat = lat;
         d->opLon = lon;
       }
+      d->opLocType = m[1] & 0x03;
+      d->opAlt = odidAlt(m + 18);
+      if (((m[1] >> 2) & 0x07) == 1) {  // klasyfikacja UE
+        d->euCat = m[17] >> 4;
+        d->euClass = m[17] & 0x0F;
+      }
       uint32_t ts;
       memcpy(&ts, m + 20, 4);
       if (!unixBase && ts) unixBase = ODID_EPOCH_2019 + ts - millis() / 1000;
+      break;
+    }
+    case 5: {  // Operator ID: tylko znaki bezpieczne w JSON
+      char id[21];
+      memcpy(id, m + 2, 20);
+      id[20] = 0;
+      for (int i = 19; i >= 0 && (id[i] == 0 || id[i] == ' '); i--) id[i] = 0;
+      for (int i = 0; id[i]; i++)
+        if (!isalnum((unsigned char)id[i]) && id[i] != '-' && id[i] != '_' && id[i] != '.') id[i] = '?';
+      if (id[0]) strcpy(d->opId, id);
       break;
     }
   }
