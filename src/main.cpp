@@ -426,9 +426,26 @@ static void handleSerialCommand() {
 // ---------------------------------------------------------------- przyciski
 
 static void handleButtons() {
-  bool any = M5.BtnA.wasPressed() || M5.BtnB.wasPressed() || M5.BtnPWR.wasPressed();
+  // włączanie to przytrzymanie przycisku zasilania: program startuje, zanim użytkownik go puści,
+  // i wcześniej od razu uznawał to za "przytrzymaj = wyłącz". Przycisk działa dopiero po puszczeniu.
+  static bool pwrReady = false;
+  if (!pwrReady) {
+    if (M5.BtnPWR.isPressed()) {
+      M5.BtnPWR.wasHold();
+      M5.BtnPWR.wasClicked();
+      M5.BtnPWR.wasPressed();
+    } else {
+      pwrReady = true;
+      M5.BtnPWR.wasClicked();
+      M5.BtnPWR.wasHold();
+      M5.BtnPWR.wasPressed();
+    }
+  }
+  bool any = M5.BtnA.wasPressed() || M5.BtnB.wasPressed() || (pwrReady && M5.BtnPWR.wasPressed());
+  static uint32_t wokeMs = 0;
   if (any && (!screenOn || dimmed)) {  // pierwsze naciśnięcie tylko budzi ekran
     wake();
+    wokeMs = millis();  // puszczenie tego przycisku to nie "kliknięcie" (inaczej ekran od razu gaśnie)
     M5.BtnA.wasClicked();
     M5.BtnB.wasClicked();
     M5.BtnPWR.wasClicked();
@@ -437,7 +454,8 @@ static void handleButtons() {
   if (any) lastInputMs = millis();
   DroneInfo *list[MAX_DRONES];
   int n = activeDrones(list);
-  if (M5.BtnA.wasClicked()) {
+  bool woke = millis() - wokeMs < 2500;  // A/B, które obudziły ekran, nie zmieniają widoku
+  if (M5.BtnA.wasClicked() && !woke) {
     view = view == V_ALARM ? V_DRONES : view == V_DRONES ? V_HUNT : view == V_HUNT ? V_SETTINGS : V_ALARM;
     huntMax = -127;
     dirty = true;
@@ -455,7 +473,7 @@ static void handleButtons() {
       showToast("Dron bez ID");
     }
   }
-  if (M5.BtnB.wasClicked()) {
+  if (M5.BtnB.wasClicked() && !woke) {
     if (view == V_SETTINGS) {
       setSel = (setSel + 1) % 3;
     } else if (view == V_ALARM) {
@@ -481,11 +499,12 @@ static void handleButtons() {
       showToast(soundOn ? "Dzwiek wlaczony" : "Dzwiek wylaczony");
     }
   }
-  if (M5.BtnPWR.wasClicked()) {
+  bool pwrClick = M5.BtnPWR.wasClicked();
+  if (pwrReady && pwrClick && !woke) {
     screenOn = false;
     M5.Display.sleep();
   }
-  if (M5.BtnPWR.wasHold()) {
+  if (pwrReady && M5.BtnPWR.wasHold()) {
     M5.Display.fillScreen(TFT_BLACK);
     M5.Power.powerOff();
   }
@@ -511,6 +530,7 @@ void setup() {
   auto cfg = M5.config();
   cfg.serial_baudrate = 921600;
   M5.begin(cfg);  // M5Unified: ekran, przyciski, brzęczyk, RTC, podtrzymanie zasilania (GPIO4)
+  M5.BtnPWR.setHoldThresh(2000);  // wyłączenie: przytrzymanie przycisku zasilania 2 s
   setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
   tzset();
   pinMode(PIN_LED, OUTPUT);

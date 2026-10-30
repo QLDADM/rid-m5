@@ -72,7 +72,8 @@ Gotowe. Na ekranie pojawi się widok ALARM. Wgranie pliku `full.bin` kasuje usta
 | **A** przytrzymaj | w DRONY: oznaczenie brak → SWOJ → OBCY |
 | **B** przytrzymaj | w USTAWIENIA: zmiana zaznaczonej opcji, w pozostałych widokach dźwięk wł./wył. |
 | zasilanie krótko | ekran wł./wył. |
-| zasilanie przytrzymaj | wyłączenie |
+| zasilanie przytrzymaj 2 s | wyłączenie |
+| zasilanie przytrzymaj ok. 2 s (wyłączony) | włączenie |
 
 Pierwsze naciśnięcie przy przyciemnionym albo wygaszonym ekranie tylko go budzi.
 
