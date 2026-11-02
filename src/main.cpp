@@ -616,4 +616,14 @@ void loop() {
     lastStatus = now;
     printStatus();
   }
+  chSummaryTick();
+  static uint32_t lastChSent = 0;
+  if (chSummaryMs != lastChSent) {  // zajętość kanałów Wi-Fi 2,4 GHz: panel pasma na stronie RID Decoder (przez agenta)
+    lastChSent = chSummaryMs;
+    Serial.print("{\"cs\":{\"b\":\"2G4\",\"r\":[");
+    for (int c = 1; c <= 13; c++) Serial.printf("%s%u", c > 1 ? "," : "", chRate[c]);
+    Serial.print("],\"p\":[");
+    for (int c = 1; c <= 13; c++) Serial.printf("%s%d", c > 1 ? "," : "", chRssi[c]);
+    Serial.print("]}}\n");
+  }
 }

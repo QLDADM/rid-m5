@@ -8,7 +8,8 @@ Firmware dla **M5StickC Plus2**. Zamienia go w mały wykrywacz dronów do noszen
 - Wykrywa też **drony Wi-Fi bez Remote ID** (DJI Tello, Parrot, zabawkowe drony z kamerą Wi-Fi).
 - Wbudowany zegar RTC pamięta godzinę także bez komputera.
 - Przez USB-C działa jako sensor agenta RID Decoder na komputerze (opcjonalnie).
-  Oznaczenia swój/obcy są wtedy wspólne z Heltec, CYD i stroną RID Decoder.
+  Oznaczenia swój/obcy są wtedy wspólne z Heltec, CYD i stroną RID Decoder. Strona dostaje też zajętość
+  kanałów Wi-Fi 2,4 GHz (panel pasma).
 
 Ten sam numer wersji mają firmware dla [Heltec V3](https://github.com/QLDADM/rid-heltec) i [CYD](https://github.com/QLDADM/rid-cyd).
 
@@ -114,5 +115,7 @@ Wgranie przez PlatformIO nie kasuje ustawień.
 
 ### Protokół USB (921600 bod)
 
-Linie JSON jak w Heltec, z polem `"dev":"m5"`: ramki `{"t":...}`, status, drony Wi-Fi `{"wd":{...}}`.
+Linie JSON jak w Heltec, z polem `"dev":"m5"`: ramki `{"t":...}`, status, drony Wi-Fi `{"wd":{...}}`,
+a co ok. 10 s nasłuchu zajętość kanałów Wi-Fi 1–13: `{"cs":{"b":"2G4","r":[ramek/s...],"p":[najsilniejszy dBm...]}}`
+(`-128` = brak sygnału na kanale).
 Polecenia: `ID`, `CH <n>`, `TIME <unix>`, `TAG <id> own|foreign|-`, `TAGS`, `TAGCLR`, `TAGPEND`, `PING`.
