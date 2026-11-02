@@ -11,7 +11,7 @@ Firmware dla **M5StickC Plus2**. Zamienia go w mały wykrywacz dronów do noszen
   Oznaczenia swój/obcy są wtedy wspólne z Heltec, CYD i stroną RID Decoder. Strona dostaje też zajętość
   kanałów Wi-Fi 2,4 GHz (panel pasma).
 
-Ten sam numer wersji mają firmware dla [Heltec V3](https://github.com/QLDADM/rid-heltec) i [CYD](https://github.com/QLDADM/rid-cyd).
+Ten sam numer wersji mają firmware dla [Dron Detector (Heltec V3)](https://github.com/QLDADM/dron-detector) i [CYD](https://github.com/QLDADM/rid-cyd).
 
 ---
 
